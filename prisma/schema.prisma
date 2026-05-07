@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_URL")
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+}
+
+enum AttemptStatus {
+  SUCCESS
+  FAILED
+  TIMEOUT
+}
+
+model Payment {
+  id                String            @id @default(uuid())
+
+  amount            Decimal           @db.Decimal(10, 2)
+  currency          String
+
+  status            PaymentStatus     @default(PENDING)
+
+  idempotencyKey    String            @unique
+
+  externalReference String?
+
+  retryCount        Int               @default(0)
+  maxRetries        Int               @default(3)
+
+  failureReason     String?
+
+  attempts          PaymentAttempt[]
+  webhooks          WebhookEvent[]
+
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([status])
+  @@index([externalReference])
+}
+
+model PaymentAttempt {
+  id               String          @id @default(uuid())
+
+  paymentId        String
+  payment          Payment         @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  attemptNumber    Int
+
+  status           AttemptStatus
+
+  providerResponse Json?
+  errorMessage     String?
+
+  startedAt        DateTime        @default(now())
+  completedAt      DateTime?
+
+  createdAt        DateTime        @default(now())
+
+  @@index([paymentId])
+}
+
+model WebhookEvent {
+  id             String       @id @default(uuid())
+
+  paymentId      String
+  payment        Payment      @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  eventType      String
+
+  payload        Json
+
+  processed      Boolean      @default(false)
+
+  receivedAt     DateTime     @default(now())
+
+  @@index([paymentId])
+  @@index([processed])
+}

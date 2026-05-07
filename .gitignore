@@ -4,3 +4,7 @@ dist
 coverage
 logs
 
+
+/src/generated/prisma
+
+/src/generated/prisma

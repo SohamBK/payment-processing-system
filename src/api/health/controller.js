@@ -1,10 +1,14 @@
+import { prisma } from '../../config/prisma.js';
 import { successResponse } from '../../utils/response.js';
 
 export const healthCheck = async (req, res, next) => {
   try {
+    await prisma.$queryRaw`SELECT 1`;
+
     return successResponse(res, {
       message: 'Service is healthy',
       data: {
+        db: 'connected',
         uptime: process.uptime(),
         timestamp: new Date().toISOString(),
       },
