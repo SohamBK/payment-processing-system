@@ -10,11 +10,13 @@ datasource db {
 enum PaymentStatus {
   PENDING
   PROCESSING
+  RETRYING
   SUCCESS
   FAILED
 }
 
 enum AttemptStatus {
+  PROCESSING
   SUCCESS
   FAILED
   TIMEOUT
@@ -70,6 +72,8 @@ model PaymentAttempt {
 
 model WebhookEvent {
   id             String       @id @default(uuid())
+
+  eventId        String       @unique
 
   paymentId      String
   payment        Payment      @relation(fields: [paymentId], references: [id], onDelete: Cascade)
